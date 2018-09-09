@@ -285,7 +285,7 @@ private drawOnCanvas(
             cx.drawImage(image, 0, 0);
           };
           image.src = data[0].board;
-        },this);
+        });
   }
 
   public sendMessage(message: string): void {
