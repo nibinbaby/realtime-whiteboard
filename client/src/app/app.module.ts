@@ -6,6 +6,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { ChatModule } from './chat/chat.module';
 import { SharedModule } from './shared/shared.module';
+import { HttpClientModule } from '@angular/common/http';  // replaces previous Http service
 
 @NgModule({
   declarations: [
@@ -16,7 +17,7 @@ import { SharedModule } from './shared/shared.module';
     BrowserAnimationsModule,
     AppRoutingModule,
     ChatModule,
-    SharedModule
+    SharedModule, HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]

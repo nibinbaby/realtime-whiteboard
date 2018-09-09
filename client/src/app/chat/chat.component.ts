@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChildren, ViewChild, AfterViewInit, QueryList, ElementRef,Input } from '@angular/core';
+import { Component, OnInit, ViewChildren, ViewChild, AfterViewInit, QueryList, ElementRef,Input, HostListener } from '@angular/core';
 import { MatDialog, MatDialogRef, MatList, MatListItem } from '@angular/material';
 
 import { Observable } from 'rxjs/Observable';
@@ -15,9 +15,11 @@ import { User } from './shared/model/user';
 import { SocketService } from './shared/services/socket.service';
 import { DialogUserComponent } from './dialog-user/dialog-user.component';
 import { DialogUserType } from './dialog-user/dialog-user-type';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 
 const AVATAR_URL = 'https://api.adorable.io/avatars/285';
+const SERVER_URL = 'http://127.0.0.1:3020';
 
 @Component({
   selector: 'tcc-chat',
@@ -56,14 +58,33 @@ export class ChatComponent implements OnInit, AfterViewInit {
   @ViewChildren(MatListItem, { read: ElementRef }) matListItems: QueryList<MatListItem>;
 
   constructor(private socketService: SocketService,
-    public dialog: MatDialog) { }
+    public dialog: MatDialog,
+    private http:HttpClient) { }
 
   ngOnInit(): void {
     this.initModel();
     // Using timeout due to https://github.com/angular/angular/issues/14748
     setTimeout(() => {
-      this.openUserPopup(this.defaultDialogUserParams);
+      if(void 0 == localStorage.getItem('username')){
+          this.openUserPopup(this.defaultDialogUserParams);
+      }else{
+        let message: Message;
+        const randomId = this.getRandomId();
+        this.user = {
+          id: randomId,
+          name: localStorage.getItem('username')
+        };
+        message = {
+          from: this.user,
+          action: Action.JOINED
+        }
+        this.initIoConnection();
+        this.loggedInUser();
+        this.socketService.send(message);
+      }
     }, 0);
+
+
   }
 
   ngAfterViewInit(): void {
@@ -84,9 +105,17 @@ export class ChatComponent implements OnInit, AfterViewInit {
     this.cx.strokeStyle = '#000';
 
     // we'll implement this method to start capturing mouse events
-this.captureEvents(canvasEl);
+    this.captureEvents(canvasEl);
+
   }
 
+  @HostListener('mouseup')
+  onMouseUp() {
+    var whiteboardDraw = this.cx.canvas.toDataURL();
+    this.http.post(SERVER_URL+'/board',{'name': 'whiteboard', 'board': whiteboardDraw }).subscribe(data => {
+      // console.log(data);
+    });
+  }
 
 
   private captureEvents(canvasEl: HTMLCanvasElement) {
@@ -254,7 +283,21 @@ private drawOnCanvas(
       } else if (paramsDialog.dialogType === DialogUserType.EDIT) {
         this.sendNotification(paramsDialog, Action.RENAME);
       }
+      this.loggedInUser();
+
     });
+  }
+
+  public loggedInUser(){
+
+        this.http.get(SERVER_URL+'/board').subscribe(data => {
+          var image = new Image();
+          var cx = this.cx;
+          image.onload = function() {
+            cx.drawImage(image, 0, 0);
+          };
+          image.src = data[0].board;
+        },this);
   }
 
   public sendMessage(message: string): void {
@@ -271,7 +314,6 @@ private drawOnCanvas(
 
   public sendNotification(params: any, action: Action): void {
     let message: Message;
-
     if (action === Action.JOINED) {
       message = {
         from: this.user,
@@ -286,6 +328,8 @@ private drawOnCanvas(
         }
       };
     }
+    localStorage.setItem('username', this.user.name);
+
 
     this.socketService.send(message);
   }
