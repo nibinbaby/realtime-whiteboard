@@ -18,7 +18,6 @@ import { DialogUserType } from './dialog-user/dialog-user-type';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 
-const AVATAR_URL = 'https://api.adorable.io/avatars/285';
 const SERVER_URL = 'http://127.0.0.1:3020';
 
 @Component({
@@ -63,7 +62,6 @@ export class ChatComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.initModel();
-    // Using timeout due to https://github.com/angular/angular/issues/14748
     setTimeout(() => {
       if(void 0 == localStorage.getItem('username')){
           this.openUserPopup(this.defaultDialogUserParams);
@@ -89,9 +87,6 @@ export class ChatComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     // subscribing to any changes in the list of items / messages
-    // this.matListItems.changes.subscribe(elements => {
-    //   this.scrollToBottom();
-    // });
     const canvasEl: HTMLCanvasElement = this.canvas.nativeElement;
     this.cx = canvasEl.getContext('2d');
 
@@ -149,7 +144,7 @@ export class ChatComponent implements OnInit, AfterViewInit {
         y: res[1].clientY - rect.top
       };
 
-          this.socketService.draw({prevPos, currentPos});
+      this.socketService.draw({prevPos, currentPos});
       // this method we'll implement soon to do the actual drawing
       this.drawOnCanvas(prevPos, currentPos);
 });
@@ -189,8 +184,7 @@ private drawOnCanvas(
   private initModel(): void {
     const randomId = this.getRandomId();
     this.user = {
-      id: randomId,
-      avatar: `${AVATAR_URL}/${randomId}.png`
+      id: randomId
     };
   }
 
@@ -245,13 +239,9 @@ private drawOnCanvas(
 
   public setPen(pencolor){
     if(pencolor == 0){
-      // this.cx.strokeStyle = '#FFF';
-      // this.cx.lineWidth = 6;
       this.socketService.setStrokeStyle({'strokeStyle':'#FFF', 'lineWidth': 6});
     }
     else if(pencolor == 1){
-      // this.cx.strokeStyle = '#000';
-      // this.cx.lineWidth = 3;
       this.socketService.setStrokeStyle({'strokeStyle':'#000', 'lineWidth': 3});
     }
   }
@@ -264,8 +254,6 @@ private drawOnCanvas(
   public clearAll(){
     const canvas = this.canvas.nativeElement;
     this.cx.clearRect(0, 0, canvas.width, canvas.height);
-    // this.cx.strokeStyle = '#000';
-    // this.cx.lineWidth = 3;
     this.socketService.setStrokeStyle({'strokeStyle':'#000', 'lineWidth': 3});
   }
 
